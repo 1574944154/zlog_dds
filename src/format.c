@@ -52,18 +52,16 @@ void zlog_format_del(zlog_format_t * a_format)
 	return;
 }
 
-zlog_format_t *zlog_format_new(struct log_format_properties_listelem *elem, int *time_cache_count)
+// zlog_format_t *zlog_format_new(struct log_format_properties_listelem *elem, int *time_cache_count)
+zlog_format_t *zlog_format_new(char *name, char *pattern, int *time_cache_count)
 {
-	int nscan = 0;
 	zlog_format_t *a_format = NULL;
-	int nread = 0;
-	const char *p_start;
-	const char *p_end;
 	char *p;
 	char *q;
 	zlog_spec_t *a_spec;
 
-	zc_assert(elem, NULL);
+	zc_assert(name, NULL);
+	zc_assert(pattern, NULL);
 
 	a_format = calloc(1, sizeof(zlog_format_t));
 	if (!a_format) {
@@ -76,7 +74,7 @@ zlog_format_t *zlog_format_new(struct log_format_properties_listelem *elem, int 
 	 * pattern      %d(%F %X.%l) %-6V (%c:%F:%L) - %m%n
 	 */
 	memset(a_format->name, 0x00, sizeof(a_format->name));
-	strcpy(a_format->name, elem->name);
+	strcpy(a_format->name, name);
 
 	for (p = a_format->name; *p != '\0'; p++) {
 		if ((!isalnum(*p)) && (*p != '_')) {
@@ -86,7 +84,7 @@ zlog_format_t *zlog_format_new(struct log_format_properties_listelem *elem, int 
 	}
 
 	memset(a_format->pattern, 0x00, sizeof(a_format->pattern));
-	strcpy(a_format->pattern, elem->pattern);
+	strcpy(a_format->pattern, pattern);
 
 	if (zc_str_replace_env(a_format->pattern, sizeof(a_format->pattern))) {
 		zc_error("zc_str_replace_env fail");

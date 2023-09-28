@@ -53,14 +53,10 @@ struct zlog_rule_s {
 	char archive_path[MAXLEN_PATH + 1];
 	zc_arraylist_t *archive_specs;
 
-	FILE *pipe_fp;
-	int pipe_fd;
-
 	size_t fsync_period;
 	size_t fsync_count;
 
 	zc_arraylist_t *levels;
-	int syslog_facility;
 
 	zlog_format_t *format;
 	zlog_rule_output_fn output;

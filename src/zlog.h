@@ -36,7 +36,7 @@ struct log_rule_properties_listelem {
   struct log_rule_properties_listelem *next;
   char *category;
   char *level;
-  char *output;
+  char *filePath;
   uint32_t archiveMaxSize;
   uint32_t archiveMaxCount;
   char *archivePattern;

@@ -103,8 +103,6 @@ enum {
 
 zlog_conf_t *zlog_conf_new(struct ddsi_config_logcfg *config)
 {
-	int nwrite = 0;
-	int cfg_source = 0;
 	zlog_conf_t *a_conf = NULL;
 
 	a_conf = calloc(1, sizeof(zlog_conf_t));
@@ -112,30 +110,6 @@ zlog_conf_t *zlog_conf_new(struct ddsi_config_logcfg *config)
 		zc_error("calloc fail, errno[%d]", errno);
 		return NULL;
 	}
-
-	// Find content of pointer. If it starts with '[' then content are configurations.
-	// if (config && config[0] != '\0' && config[0] != '[') {
-	// 	nwrite = snprintf(a_conf->file, sizeof(a_conf->file), "%s", config);
-	// 	cfg_source = FILE_CFG;
-	// } else if (getenv("ZLOG_CONF_PATH") != NULL) {
-	// 	nwrite = snprintf(a_conf->file, sizeof(a_conf->file), "%s", getenv("ZLOG_CONF_PATH"));
-	// 	cfg_source = FILE_CFG;
-	// } else if (config && config[0]=='[') {
-	// 	memset(a_conf->file, 0x00, sizeof(a_conf->file));
-	// 	nwrite = snprintf(a_conf->cfg_ptr, sizeof(a_conf->cfg_ptr), "%s", config);
-	// 	cfg_source = IN_MEMORY_CFG;
-	// 	if (nwrite < 0 || nwrite >= sizeof(a_conf->file)) {
-	// 		zc_error("not enough space for configurations, nwrite=[%d], errno[%d]", nwrite, errno);
-	// 		goto err;
-	// 	}
-	// } else {
-	// 	memset(a_conf->file, 0x00, sizeof(a_conf->file));
-	// 	cfg_source = NO_CFG;
-	// }
-	// if ((nwrite < 0) || ((nwrite >= sizeof(a_conf->file)) && (cfg_source == FILE_CFG))) {
-	// 	zc_error("not enough space for path name, nwrite=[%d], errno[%d]", nwrite, errno);
-	// 	goto err;
-	// }
 
 	/* set default configuration start */
 	a_conf->strict_init = 1;
@@ -190,8 +164,20 @@ static int zlog_conf_build(zlog_conf_t *a_conf, struct ddsi_config_logcfg *confi
 	zlog_format_t *a_format = NULL;
 	zlog_rule_t *a_rule = NULL;
 
+	a_conf->rotater = zlog_rotater_new(a_conf->rotate_lock_file);
+	if (!a_conf->rotater) {
+		zc_error("zlog_rotater_new fail");
+		return -1;
+	}
+
+	a_conf->default_format = zlog_format_new("default", a_conf->default_format_line, &(a_conf->time_cache_count));
+	if (!a_conf->default_format) {
+		zc_error("zlog_format_new fail");
+		return -1;
+	}
+
 	while (lf_elem) {
-		a_format = zlog_format_new (lf_elem, &(a_conf->time_cache_count));
+		a_format = zlog_format_new (lf_elem->name, lf_elem->pattern, &(a_conf->time_cache_count));
 		if (!a_format) {
 			zc_error("zlog_format_new fail [%s]", lf_elem->name);
 		}
@@ -215,7 +201,7 @@ static int zlog_conf_build(zlog_conf_t *a_conf, struct ddsi_config_logcfg *confi
 		}
 		lr_elem = lr_elem->next;
 	}
-
+	return 0;
 }
 
 /* section [global:1] [levels:2] [formats:3] [rules:4] */
