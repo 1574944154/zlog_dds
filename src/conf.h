@@ -15,11 +15,7 @@
 #include "zlog.h"
 
 typedef struct zlog_conf_s {
-	char file[MAXLEN_PATH + 1];
-	char cfg_ptr[MAXLEN_CFG_LINE*MAXLINES_NO];
-	char mtime[20 + 1];
 
-	int strict_init;
 	size_t buf_size_min;
 	size_t buf_size_max;
 

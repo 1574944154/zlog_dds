@@ -44,7 +44,6 @@ struct log_rule_properties_listelem {
 };
 
 struct ddsi_config_logcfg {
-  int fileSize;
   uint32_t bufferMin;
   uint32_t bufferMax;
   char *rotateLockFile;
@@ -56,18 +55,12 @@ struct ddsi_config_logcfg {
 };
 
 int zlog_init(struct ddsi_config_logcfg *config);
-int zlog_reload(struct ddsi_config_logcfg *config);
 void zlog_fini(void);
 
 void zlog_profile(void);
 
 zlog_category_t *zlog_get_category(const char *cname);
 int zlog_level_enabled(zlog_category_t *category, const int level);
-
-int zlog_put_mdc(const char *key, const char *value);
-char *zlog_get_mdc(const char *key);
-void zlog_remove_mdc(const char *key);
-void zlog_clean_mdc(void);
 
 int zlog_level_switch(zlog_category_t * category, int level);
 int zlog_level_enabled(zlog_category_t * category, int level);
@@ -88,21 +81,6 @@ void hzlog(zlog_category_t * category,
 	long line, int level,
 	const void *buf, size_t buflen);
 
-int dzlog_init(struct ddsi_config_logcfg *config, const char *cname);
-int dzlog_set_category(const char *cname);
-
-void dzlog(const char *file, size_t filelen,
-	const char *func, size_t funclen,
-	long line, int level,
-	const char *format, ...) ZLOG_CHECK_PRINTF(7,8);
-void vdzlog(const char *file, size_t filelen,
-	const char *func, size_t funclen,
-	long line, int level,
-	const char *format, va_list args);
-void hdzlog(const char *file, size_t filelen,
-	const char *func, size_t funclen,
-	long line, int level,
-	const void *buf, size_t buflen);
 
 typedef struct zlog_msg_s {
 	char *buf;
@@ -154,25 +132,7 @@ typedef enum {
 #define zlog_debug(cat, ...) \
 	zlog(cat, __FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
 	ZLOG_LEVEL_DEBUG, __VA_ARGS__)
-/* dzlog macros */
-#define dzlog_fatal(...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_FATAL, __VA_ARGS__)
-#define dzlog_error(...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_ERROR, __VA_ARGS__)
-#define dzlog_warn(...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_WARN, __VA_ARGS__)
-#define dzlog_notice(...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_NOTICE, __VA_ARGS__)
-#define dzlog_info(...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_INFO, __VA_ARGS__)
-#define dzlog_debug(...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_DEBUG, __VA_ARGS__)
+
 #elif defined __GNUC__
 /* zlog macros */
 #define zlog_fatal(cat, format, args...) \
@@ -193,25 +153,7 @@ typedef enum {
 #define zlog_debug(cat, format, args...) \
 	zlog(cat, __FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
 	ZLOG_LEVEL_DEBUG, format, ##args)
-/* dzlog macros */
-#define dzlog_fatal(format, args...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_FATAL, format, ##args)
-#define dzlog_error(format, args...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_ERROR, format, ##args)
-#define dzlog_warn(format, args...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_WARN, format, ##args)
-#define dzlog_notice(format, args...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_NOTICE, format, ##args)
-#define dzlog_info(format, args...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_INFO, format, ##args)
-#define dzlog_debug(format, args...) \
-	dzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_DEBUG, format, ##args)
+
 #endif
 
 /* vzlog macros */
@@ -255,45 +197,6 @@ typedef enum {
 	ZLOG_LEVEL_DEBUG, buf, buf_len)
 
 
-/* vdzlog macros */
-#define vdzlog_fatal(format, args) \
-	vdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_FATAL, format, args)
-#define vdzlog_error(format, args) \
-	vdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_ERROR, format, args)
-#define vdzlog_warn(format, args) \
-	vdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_WARN, format, args)
-#define vdzlog_notice(format, args) \
-	vdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_NOTICE, format, args)
-#define vdzlog_info(format, args) \
-	vdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_INFO, format, args)
-#define vdzlog_debug(format, args) \
-	vdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_DEBUG, format, args)
-
-/* hdzlog macros */
-#define hdzlog_fatal(buf, buf_len) \
-	hdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_FATAL, buf, buf_len)
-#define hdzlog_error(buf, buf_len) \
-	hdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_ERROR, buf, buf_len)
-#define hdzlog_warn(buf, buf_len) \
-	hdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_WARN, buf, buf_len)
-#define hdzlog_notice(buf, buf_len) \
-	hdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_NOTICE, buf, buf_len)
-#define hdzlog_info(buf, buf_len) \
-	hdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_INFO, buf, buf_len)
-#define hdzlog_debug(buf, buf_len) \
-	hdzlog(__FILE__, sizeof(__FILE__)-1, __func__, sizeof(__func__)-1, __LINE__, \
-	ZLOG_LEVEL_DEBUG, buf, buf_len)
 
 /* enabled macros */
 #define zlog_fatal_enabled(zc) zlog_level_enabled(zc, ZLOG_LEVEL_FATAL)

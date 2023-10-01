@@ -502,12 +502,6 @@ zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
 	a_rule->file_perms = file_perms;
 	a_rule->fsync_period = fsync_period;
 
-	/*
-	 * selector     [f.INFO]
-	 * category     [f]
-	 * level        [.INFO]
-	 */
-
 	/* check and set category */
 	for (p = elem->category; *p != '\0'; p++) {
 		if ((!isalnum(*p)) && (*p != '_') && (*p != '-') && (*p != '*') && (*p != '!')) {
@@ -516,7 +510,6 @@ zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
 		}
 	}
 
-	/* as one line can't be longer than MAXLEN_CFG_LINE, same as category */
 	strcpy(a_rule->category, elem->category);
 
 	/* check and set level */
@@ -569,64 +562,64 @@ zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
 		break;
 	}
 
-	/* action               ["%H/log/aa.log", 20MB * 12 ; MyTemplate]
-	 * output               ["%H/log/aa.log", 20MB * 12]
-	 * format               [MyTemplate]
-	 */
-	
-	/* check and get format */
-	if (STRCMP(elem->formatName, ==, "")) {
-		zc_debug("no format specified, use default");
-		a_rule->format = default_format;
-	} else {
-		int i;
-		int find_flag = 0;
-		zlog_format_t *a_format;
+	int i;
+	int find_flag = 0;
+	zlog_format_t *a_format;
 
-		zc_arraylist_foreach(formats, i, a_format) {
-			if (zlog_format_has_name(a_format, elem->formatName)) {
-				a_rule->format = a_format;
-				find_flag = 1;
-				break;
-			}
-		}
-		if (!find_flag) {
-			zc_error("in conf file can't find format[%s], pls check",
-			     elem->formatName);
-			goto err;
+	zc_arraylist_foreach(formats, i, a_format) {
+		if (zlog_format_has_name(a_format, elem->formatName)) {
+			a_rule->format = a_format;
+			find_flag = 1;
+			break;
 		}
 	}
-
-	/* output               [-"%E(HOME)/log/aa.log" , 20MB*12]  [>syslog , LOG_LOCAL0 ]
-	 * file_path            [-"%E(HOME)/log/aa.log" ]           [>syslog ]
-	 * *file_limit          [20MB * 12 ~ "aa.#i.log" ]          [LOG_LOCAL0]
-	 */
-
-	rc = zlog_rule_parse_path(elem->filePath, a_rule->file_path, sizeof(a_rule->file_path),
-			&(a_rule->dynamic_specs), time_cache_count);
-	if (rc) {
-		zc_error("zlog_rule_parse_path fail");
+	if (!find_flag) {
+		zc_error("in conf file can't find format[%s], pls check",
+				elem->formatName);
 		goto err;
 	}
 
-	if (STRNCMP(elem->filePath, ==, "stdout", 6)) {
-		a_rule->output = zlog_rule_output_stdout;
-	} else if (STRNCMP(elem->filePath, ==, "stderr", 6)) {
-		a_rule->output = zlog_rule_output_stderr;
-	} else {
-		a_rule->archive_max_count = elem->archiveMaxCount;
-		a_rule->archive_max_size = elem->archiveMaxSize;
+	p = NULL;
 
-		rc = zlog_rule_parse_path(elem->archivePattern, a_rule->archive_path, sizeof(a_rule->file_path), &(a_rule->archive_specs), time_cache_count);
+	switch (elem->filePath[0]) {
+	case '>':
+		if (STRNCMP(elem->filePath+1, ==, "stdout", 6)) {
+			a_rule->output = zlog_rule_output_stdout;
+		} else if (STRNCMP(elem->filePath+1, ==, "stderr", 6)) {
+			a_rule->output = zlog_rule_output_stderr;
+		} else {
+			zc_error
+			    ("[%s]the string after is not syslog, stdout or stderr", elem->filePath);
+			goto err;
+		}
+		break;
+	default:
+		p = elem->filePath;
+		rc = zlog_rule_parse_path(p, a_rule->file_path, sizeof(a_rule->file_path), 
+				&(a_rule->dynamic_specs), time_cache_count);
 		if (rc) {
 			zc_error("zlog_rule_parse_path fail");
 			goto err;
 		}
 
-		p = strchr(a_rule->archive_path, '#');
-		if ( (p == NULL) || ((strchr(p, 'r') == NULL) && (strchr(p, 's') == NULL))) {
-			zc_error("archive_path must contain #r or #s");
-			goto err;
+		if (elem->archiveMaxSize > 0) {
+			a_rule->archive_max_count = elem->archiveMaxCount;
+			a_rule->archive_max_size = elem->archiveMaxSize;
+
+			if (strlen(elem->archivePattern) != 0) {
+				rc = zlog_rule_parse_path(elem->archivePattern, a_rule->archive_path, sizeof(a_rule->file_path),
+											&(a_rule->archive_specs), time_cache_count);
+				if (rc) {
+					zc_error("zlog_rule_parse_path fail");
+					goto err;
+				}
+
+				p = strchr(a_rule->archive_path, '#');
+				if ( (p==NULL) || ((strchr(p, 'r')==NULL) && (strchr(p, 's')==NULL))) {
+					zc_error("archive_path must contain #r or #s");
+					goto err;
+				}
+			}
 		}
 
 		if (a_rule->dynamic_specs) {
@@ -638,22 +631,17 @@ zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
 		} else {
 			struct stat stb;
 
-			if (a_rule->archive_max_size <= 0) {
+			if (a_rule->archive_max_size <=0 ) {
 				a_rule->output = zlog_rule_output_static_file_single;
 			} else {
 				a_rule->output = zlog_rule_output_static_file_rotate;
 			}
 
 			a_rule->static_fd = open(a_rule->file_path, 
-					O_WRONLY|O_APPEND|O_CREAT|a_rule->file_open_flags, 
-					a_rule->file_perms);
+						O_WRONLY | O_APPEND | O_CREAT | a_rule->file_open_flags,
+						a_rule->file_perms);
 			if (a_rule->static_fd < 0) {
-				zc_error("open file[%s] fail, error[%d]", a_rule->file_path, errno);
-				goto err;
-			}
-
-			if (fstat(a_rule->static_fd, &stb)) {
-				zc_error("stat [%s] fail, errno[%d], failing to open static_fd", a_rule->file_path, errno);
+				zc_error("open file[%s] fail, errno[%d]", a_rule->file_path, errno);
 				goto err;
 			}
 
@@ -666,8 +654,6 @@ zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
 			a_rule->static_ino = stb.st_ino;
 		}
 	}
-
-
 
 	return a_rule;
 err:

@@ -17,13 +17,12 @@
 void zlog_level_profile(zlog_level_t *a_level, int flag)
 {
 	zc_assert(a_level,);
-	zc_profile(flag, "---level[%p][%d,%s,%s,%d,%d]---",
+	zc_profile(flag, "---level[%p][%d,%s,%s,%d]---",
 		a_level,
 		a_level->int_level,
 		a_level->str_uppercase,
 		a_level->str_lowercase,
-		(int) a_level->str_len,
-		a_level->syslog_level);
+		(int) a_level->str_len);
 	return;
 }
 
@@ -34,34 +33,6 @@ void zlog_level_del(zlog_level_t *a_level)
 	zc_debug("zlog_level_del[%p]", a_level);
     free(a_level);
 	return;
-}
-
-static int syslog_level_atoi(char *str)
-{
-	/* guess no unix system will choose -187
-	 * as its syslog level, so it is a safe return value
-	 */
-	zc_assert(str, -187);
-
-	if (STRICMP(str, ==, "LOG_EMERG"))
-		return LOG_EMERG;
-	if (STRICMP(str, ==, "LOG_ALERT"))
-		return LOG_ALERT;
-	if (STRICMP(str, ==, "LOG_CRIT"))
-		return LOG_CRIT;
-	if (STRICMP(str, ==, "LOG_ERR"))
-		return LOG_ERR;
-	if (STRICMP(str, ==, "LOG_WARNING"))
-		return LOG_WARNING;
-	if (STRICMP(str, ==, "LOG_NOTICE"))
-		return LOG_NOTICE;
-	if (STRICMP(str, ==, "LOG_INFO"))
-		return LOG_INFO;
-	if (STRICMP(str, ==, "LOG_DEBUG"))
-		return LOG_DEBUG;
-
-	zc_error("wrong syslog level[%s]", str);
-	return -187;
 }
 
 /* line: TRACE = 10, LOG_ERR */
@@ -103,17 +74,6 @@ zlog_level_t *zlog_level_new(char *line)
 	}
 
 	a_level->int_level = l;
-
-	/* fill syslog level */
-	if (sl[0] == '\0') {
-		a_level->syslog_level = LOG_DEBUG;
-	} else {
-		a_level->syslog_level = syslog_level_atoi(sl);
-		if (a_level->syslog_level == -187) {
-			zc_error("syslog_level_atoi fail");
-			goto err;
-		}
-	}
 
 	/* strncpy and toupper(str)  */
 	for (i = 0; (i < sizeof(a_level->str_uppercase) - 1) && str[i] != '\0'; i++) {

@@ -26,14 +26,14 @@
 #include "zlog.h"
 
 /*******************************************************************************/
-#define ZLOG_CONF_DEFAULT_FORMAT "default = \"%D %V [%p:%F:%L] %m%n\""
-#define ZLOG_CONF_DEFAULT_RULE "*.*        >stdout"
-#define ZLOG_CONF_DEFAULT_BUF_SIZE_MIN 1024
-#define ZLOG_CONF_DEFAULT_BUF_SIZE_MAX (2 * 1024 * 1024)
-#define ZLOG_CONF_DEFAULT_FILE_PERMS 0600
-#define ZLOG_CONF_DEFAULT_RELOAD_CONF_PERIOD 0
-#define ZLOG_CONF_DEFAULT_FSYNC_PERIOD 0
-#define ZLOG_CONF_BACKUP_ROTATE_LOCK_FILE "/tmp/zlog.lock"
+// #define ZLOG_CONF_DEFAULT_FORMAT "default = \"%D %V [%p:%F:%L] %m%n\""
+// #define ZLOG_CONF_DEFAULT_RULE "*.*        >stdout"
+// #define ZLOG_CONF_DEFAULT_BUF_SIZE_MIN 1024
+// #define ZLOG_CONF_DEFAULT_BUF_SIZE_MAX (2 * 1024 * 1024)
+// #define ZLOG_CONF_DEFAULT_FILE_PERMS 0600
+// #define ZLOG_CONF_DEFAULT_RELOAD_CONF_PERIOD 0
+// #define ZLOG_CONF_DEFAULT_FSYNC_PERIOD 0
+// #define ZLOG_CONF_BACKUP_ROTATE_LOCK_FILE "/tmp/zlog.lock"
 /*******************************************************************************/
 
 void zlog_conf_profile(zlog_conf_t * a_conf, int flag)
@@ -45,9 +45,9 @@ void zlog_conf_profile(zlog_conf_t * a_conf, int flag)
 	zc_assert(a_conf,);
 	zc_profile(flag, "-conf[%p]-", a_conf);
 	zc_profile(flag, "--global--");
-	zc_profile(flag, "---file[%s],mtime[%s]---", a_conf->file, a_conf->mtime);
-	zc_profile(flag, "---in-memory conf[%s]---", a_conf->cfg_ptr);
-	zc_profile(flag, "---strict init[%d]---", a_conf->strict_init);
+	// zc_profile(flag, "---file[%s],mtime[%s]---", a_conf->file, a_conf->mtime);
+	// zc_profile(flag, "---in-memory conf[%s]---", a_conf->cfg_ptr);
+	// zc_profile(flag, "---strict init[%d]---", a_conf->strict_init);
 	zc_profile(flag, "---buffer min[%ld]---", a_conf->buf_size_min);
 	zc_profile(flag, "---buffer max[%ld]---", a_conf->buf_size_max);
 	if (a_conf->default_format) {
@@ -95,12 +95,6 @@ void zlog_conf_del(zlog_conf_t * a_conf)
 
 static int zlog_conf_build(zlog_conf_t *a_conf, struct ddsi_config_logcfg *config);
 
-enum {
-	NO_CFG,
-	FILE_CFG,
-	IN_MEMORY_CFG
-};
-
 zlog_conf_t *zlog_conf_new(struct ddsi_config_logcfg *config)
 {
 	zlog_conf_t *a_conf = NULL;
@@ -112,7 +106,6 @@ zlog_conf_t *zlog_conf_new(struct ddsi_config_logcfg *config)
 	}
 
 	/* set default configuration start */
-	a_conf->strict_init = 1;
 	a_conf->buf_size_min = config->bufferMin;
 	a_conf->buf_size_max = config->bufferMax;
 	
@@ -155,7 +148,6 @@ err:
 	return NULL;
 }
 
-// static int zlog_conf_parse_line(zlog_conf_t * a_conf, char *line, int *section);
 
 static int zlog_conf_build(zlog_conf_t *a_conf, struct ddsi_config_logcfg *config)
 {
@@ -204,177 +196,3 @@ static int zlog_conf_build(zlog_conf_t *a_conf, struct ddsi_config_logcfg *confi
 	return 0;
 }
 
-/* section [global:1] [levels:2] [formats:3] [rules:4] */
-// static int zlog_conf_parse_line(zlog_conf_t * a_conf, char *line, int *section)
-// {
-// 	int nscan;
-// 	int nread;
-// 	char name[MAXLEN_CFG_LINE + 1] = "";
-// 	char word_1[MAXLEN_CFG_LINE + 1];
-// 	char word_2[MAXLEN_CFG_LINE + 1];
-// 	char word_3[MAXLEN_CFG_LINE + 1];
-// 	char value[MAXLEN_CFG_LINE + 1];
-// 	zlog_format_t *a_format = NULL;
-// 	zlog_rule_t *a_rule = NULL;
-
-// 	if (strlen(line) > MAXLEN_CFG_LINE) {
-// 		zc_error ("line_len[%ld] > MAXLEN_CFG_LINE[%ld], may cause overflow",
-// 			strlen(line), MAXLEN_CFG_LINE);
-// 		return -1;
-// 	}
-
-// 	/* get and set outer section flag, so it is a closure? haha */
-// 	if (line[0] == '[') {
-// 		int last_section = *section;
-// 		nscan = sscanf(line, "[ %[^] \t]", name);
-// 		if (STRCMP(name, ==, "global")) {
-// 			*section = 1;
-// 		} else if (STRCMP(name, ==, "levels")) {
-// 			*section = 2;
-// 		} else if (STRCMP(name, ==, "formats")) {
-// 			*section = 3;
-// 		} else if (STRCMP(name, ==, "rules")) {
-// 			*section = 4;
-// 		} else {
-// 			zc_error("wrong section name[%s]", name);
-// 			return -1;
-// 		}
-// 		/* check the sequence of section, must increase */
-// 		if (last_section >= *section) {
-// 			zc_error("wrong sequence of section, must follow global->levels->formats->rules");
-// 			return -1;
-// 		}
-
-// 		if (*section == 4) {
-// 			if (a_conf->reload_conf_period != 0
-// 				&& a_conf->fsync_period >= a_conf->reload_conf_period) {
-// 				/* as all rule will be rebuilt when conf is reload,
-// 				 * so fsync_period > reload_conf_period will never
-// 				 * cause rule to fsync it's file.
-// 				 * fsync_period will be meaningless and down speed,
-// 				 * so make it zero.
-// 				 */
-// 				zc_warn("fsync_period[%ld] >= reload_conf_period[%ld],"
-// 					"set fsync_period to zero");
-// 				a_conf->fsync_period = 0;
-// 			}
-
-// 			/* now build rotater and default_format
-// 			 * from the unchanging global setting,
-// 			 * for zlog_rule_new() */
-// 			a_conf->rotater = zlog_rotater_new(a_conf->rotate_lock_file);
-// 			if (!a_conf->rotater) {
-// 				zc_error("zlog_rotater_new fail");
-// 				return -1;
-// 			}
-
-// 			a_conf->default_format = zlog_format_new(a_conf->default_format_line,
-// 							&(a_conf->time_cache_count));
-// 			if (!a_conf->default_format) {
-// 				zc_error("zlog_format_new fail");
-// 				return -1;
-// 			}
-// 		}
-// 		return 0;
-// 	}
-
-// 	/* process detail */
-// 	switch (*section) {
-// 	case 1:
-// 		memset(name, 0x00, sizeof(name));
-// 		memset(value, 0x00, sizeof(value));
-// 		nscan = sscanf(line, " %[^=]= %s ", name, value);
-// 		if (nscan != 2) {
-// 			zc_error("sscanf [%s] fail, name or value is null", line);
-// 			return -1;
-// 		}
-
-// 		memset(word_1, 0x00, sizeof(word_1));
-// 		memset(word_2, 0x00, sizeof(word_2));
-// 		memset(word_3, 0x00, sizeof(word_3));
-// 		nread = 0;
-// 		nscan = sscanf(name, "%s%n%s%s", word_1, &nread, word_2, word_3);
-
-// 		if (STRCMP(word_1, ==, "strict") && STRCMP(word_2, ==, "init")) {
-// 			/* if environment variable ZLOG_STRICT_INIT is set
-// 			 * then always make it strict
-// 			 */
-// 			if (STRICMP(value, ==, "false") && !getenv("ZLOG_STRICT_INIT")) {
-// 				a_conf->strict_init = 0;
-// 			} else {
-// 				a_conf->strict_init = 1;
-// 			}
-// 		} else if (STRCMP(word_1, ==, "buffer") && STRCMP(word_2, ==, "min")) {
-// 			a_conf->buf_size_min = zc_parse_byte_size(value);
-// 		} else if (STRCMP(word_1, ==, "buffer") && STRCMP(word_2, ==, "max")) {
-// 			a_conf->buf_size_max = zc_parse_byte_size(value);
-// 		} else if (STRCMP(word_1, ==, "file") && STRCMP(word_2, ==, "perms")) {
-// 			sscanf(value, "%o", &(a_conf->file_perms));
-// 		} else if (STRCMP(word_1, ==, "rotate") &&
-// 				STRCMP(word_2, ==, "lock") && STRCMP(word_3, ==, "file")) {
-// 			/* may overwrite the inner default value, or last value */
-// 			if (STRCMP(value, ==, "self")) {
-// 				strcpy(a_conf->rotate_lock_file, a_conf->file);
-// 			} else {
-// 				strcpy(a_conf->rotate_lock_file, value);
-// 			}
-// 		} else if (STRCMP(word_1, ==, "default") && STRCMP(word_2, ==, "format")) {
-// 			/* so the input now is [format = "xxyy"], fit format's style */
-// 			strcpy(a_conf->default_format_line, line + nread);
-// 		} else if (STRCMP(word_1, ==, "reload") &&
-// 				STRCMP(word_2, ==, "conf") && STRCMP(word_3, ==, "period")) {
-// 			a_conf->reload_conf_period = zc_parse_byte_size(value);
-// 		} else if (STRCMP(word_1, ==, "fsync") && STRCMP(word_2, ==, "period")) {
-// 			a_conf->fsync_period = zc_parse_byte_size(value);
-// 		} else {
-// 			zc_error("name[%s] is not any one of global options", name);
-// 			if (a_conf->strict_init) return -1;
-// 		}
-// 		break;
-// 	case 2:
-// 		if (zlog_level_list_set(a_conf->levels, line)) {
-// 			zc_error("zlog_level_list_set fail");
-// 			if (a_conf->strict_init) return -1;
-// 		}
-// 		break;
-// 	case 3:
-// 		a_format = zlog_format_new(line, &(a_conf->time_cache_count));
-// 		if (!a_format) {
-// 			zc_error("zlog_format_new fail [%s]", line);
-// 			if (a_conf->strict_init) return -1;
-// 			else break;
-// 		}
-// 		if (zc_arraylist_add(a_conf->formats, a_format)) {
-// 			zlog_format_del(a_format);
-// 			zc_error("zc_arraylist_add fail");
-// 			return -1;
-// 		}
-// 		break;
-// 	case 4:
-// 		a_rule = zlog_rule_new(line,
-// 			a_conf->levels,
-// 			a_conf->default_format,
-// 			a_conf->formats,
-// 			a_conf->file_perms,
-// 			a_conf->fsync_period,
-// 			&(a_conf->time_cache_count));
-
-// 		if (!a_rule) {
-// 			zc_error("zlog_rule_new fail [%s]", line);
-// 			if (a_conf->strict_init) return -1;
-// 			else break;
-// 		}
-// 		if (zc_arraylist_add(a_conf->rules, a_rule)) {
-// 			zlog_rule_del(a_rule);
-// 			zc_error("zc_arraylist_add fail");
-// 			return -1;
-// 		}
-// 		break;
-// 	default:
-// 		zc_error("not in any section");
-// 		return -1;
-// 	}
-
-// 	return 0;
-// }
-// /*******************************************************************************/

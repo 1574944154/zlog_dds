@@ -28,7 +28,6 @@ void add_rule_property(struct log_rule_properties_listelem **list, struct log_ru
 }
 
 struct ddsi_config_logcfg logcfg = {
-    .fileSize = 1024,
     .bufferMin = 1024,
     .bufferMax = 10 * 1024 * 1024,
     .rotateLockFile = "/tmp/zlog.lock",
@@ -60,22 +59,22 @@ int main(int argc, char *argv[])
     struct log_rule_properties_listelem log_rule1 = {
         .archiveMaxCount = 10,
         .archiveMaxSize = 10 * 1024 * 1024,
-        .archivePattern = "%E(HOME)/log/%c.%D(%F) #2r #3s.log",
+        .archivePattern = "",
         .category = "*",
         .level = "*",
         .formatName = "simple",
-        .filePath = "%12.2E(HOME)/%c.log",
+        .filePath = ">stdout",
         .next = NULL,
     };
 
     struct log_rule_properties_listelem log_rule2 = {
         .archiveMaxCount = 10,
-        .archiveMaxSize = 10 * 1024 * 1024,
-        .archivePattern = "%E(HOME)/log/%c.%D(%F) #2r #3s.log",
+        .archiveMaxSize = 5 * 1024 * 1024,
+        .archivePattern = "",
         .category = "my",
         .level = "*",
-        .formatName = "simple",
-        .filePath = "stderr",
+        .formatName = "normal",
+        .filePath = "/home/yuan/Code/zlog_dds/%c.log",
         .next = NULL,
     };
 
@@ -98,8 +97,9 @@ int main(int argc, char *argv[])
         return -2;
     }
 
-    zlog_info(c, "hello, zlog");
-    zlog_info(c, "hello, zlog");
+    for(int i=0;i<1e6;i++) {
+        zlog_info(c, "hello, zlog ---------------------------------------------");
+    }
 
     zlog_fini();
 

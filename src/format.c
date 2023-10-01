@@ -21,21 +21,12 @@
 
 void zlog_format_profile(zlog_format_t * a_format, int flag)
 {
-
 	zc_assert(a_format,);
 	zc_profile(flag, "---format[%p][%s = %s(%p)]---",
 		a_format,
 		a_format->name,
 		a_format->pattern,
 		a_format->pattern_specs);
-
-#if 0
-	int i;
-	zlog_spec_t *a_spec;
-	zc_arraylist_foreach(a_format->pattern_specs, i, a_spec) {
-		zlog_spec_profile(a_spec, flag);
-	}
-#endif
 
 	return;
 }
