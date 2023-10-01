@@ -11,7 +11,6 @@ OBJ=    \
   format.o    \
   level.o    \
   level_list.o    \
-  mdc.o    \
   record.o    \
   record_table.o    \
   rotater.o    \
@@ -90,23 +89,21 @@ buf.o: buf.c zc_defs.h zc_profile.h zc_arraylist.h zc_hashtable.h \
  zc_xplatform.h zc_util.h buf.h
 category.o: category.c fmacros.h category.h zc_defs.h zc_profile.h \
  zc_arraylist.h zc_hashtable.h zc_xplatform.h zc_util.h thread.h event.h \
- buf.h mdc.h rule.h format.h rotater.h record.h
+ buf.h rule.h format.h rotater.h record.h
 category_table.o: category_table.c zc_defs.h zc_profile.h zc_arraylist.h \
  zc_hashtable.h zc_xplatform.h zc_util.h category_table.h category.h \
- thread.h event.h buf.h mdc.h
+ thread.h event.h buf.h
 conf.o: conf.c fmacros.h conf.h zc_defs.h zc_profile.h zc_arraylist.h \
  zc_hashtable.h zc_xplatform.h zc_util.h format.h thread.h event.h buf.h \
- mdc.h rotater.h rule.h record.h level_list.h level.h
+ rotater.h rule.h record.h level_list.h level.h
 event.o: event.c fmacros.h zc_defs.h zc_profile.h zc_arraylist.h \
  zc_hashtable.h zc_xplatform.h zc_util.h event.h
 format.o: format.c zc_defs.h zc_profile.h zc_arraylist.h zc_hashtable.h \
- zc_xplatform.h zc_util.h thread.h event.h buf.h mdc.h spec.h format.h
+ zc_xplatform.h zc_util.h thread.h event.h buf.h spec.h format.h
 level.o: level.c zc_defs.h zc_profile.h zc_arraylist.h zc_hashtable.h \
  zc_xplatform.h zc_util.h level.h
 level_list.o: level_list.c zc_defs.h zc_profile.h zc_arraylist.h \
  zc_hashtable.h zc_xplatform.h zc_util.h level.h level_list.h
-mdc.o: mdc.c mdc.h zc_defs.h zc_profile.h zc_arraylist.h zc_hashtable.h \
- zc_xplatform.h zc_util.h
 record.o: record.c zc_defs.h zc_profile.h zc_arraylist.h zc_hashtable.h \
  zc_xplatform.h zc_util.h record.h
 record_table.o: record_table.c zc_defs.h zc_profile.h zc_arraylist.h \
@@ -115,12 +112,12 @@ rotater.o: rotater.c zc_defs.h zc_profile.h zc_arraylist.h zc_hashtable.h \
  zc_xplatform.h zc_util.h rotater.h
 rule.o: rule.c fmacros.h rule.h zc_defs.h zc_profile.h zc_arraylist.h \
  zc_hashtable.h zc_xplatform.h zc_util.h format.h thread.h event.h buf.h \
- mdc.h rotater.h record.h level_list.h level.h spec.h
+ rotater.h record.h level_list.h level.h spec.h
 spec.o: spec.c fmacros.h spec.h event.h zc_defs.h zc_profile.h \
  zc_arraylist.h zc_hashtable.h zc_xplatform.h zc_util.h buf.h thread.h \
- mdc.h level_list.h level.h
+ level_list.h level.h
 thread.o: thread.c zc_defs.h zc_profile.h zc_arraylist.h zc_hashtable.h \
- zc_xplatform.h zc_util.h event.h buf.h thread.h mdc.h
+ zc_xplatform.h zc_util.h event.h buf.h thread.h
 zc_arraylist.o: zc_arraylist.c zc_defs.h zc_profile.h zc_arraylist.h \
  zc_hashtable.h zc_xplatform.h zc_util.h
 zc_hashtable.o: zc_hashtable.c zc_defs.h zc_profile.h zc_arraylist.h \
@@ -131,7 +128,7 @@ zc_util.o: zc_util.c zc_defs.h zc_profile.h zc_arraylist.h zc_hashtable.h \
 zlog-chk-conf.o: zlog-chk-conf.c fmacros.h zlog.h
 zlog.o: zlog.c fmacros.h conf.h zc_defs.h zc_profile.h zc_arraylist.h \
  zc_hashtable.h zc_xplatform.h zc_util.h format.h thread.h event.h buf.h \
- mdc.h rotater.h category_table.h category.h record_table.h \
+ rotater.h category_table.h category.h record_table.h \
  record.h rule.h
 
 $(DYLIBNAME): $(OBJ)

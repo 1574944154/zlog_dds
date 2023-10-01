@@ -70,11 +70,11 @@ int main(int argc, char *argv[])
     struct log_rule_properties_listelem log_rule2 = {
         .archiveMaxCount = 10,
         .archiveMaxSize = 5 * 1024 * 1024,
-        .archivePattern = "",
+        .archivePattern = "%c.#r.log",
         .category = "my",
         .level = "*",
         .formatName = "normal",
-        .filePath = "/home/yuan/Code/zlog_dds/%c.log",
+        .filePath = "%c.log",
         .next = NULL,
     };
 
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     }
 
     for(int i=0;i<1e6;i++) {
-        zlog_info(c, "hello, zlog ---------------------------------------------");
+        zlog_info(c, "hello, zlog -----------------------------------------");
     }
 
     zlog_fini();

@@ -13,14 +13,13 @@
 #include "event.h"
 #include "buf.h"
 #include "thread.h"
-#include "mdc.h"
 
 void zlog_thread_profile(zlog_thread_t * a_thread, int flag)
 {
 	zc_assert(a_thread,);
-	zc_profile(flag, "--thread[%p][%p][%p][%p,%p,%p,%p,%p]--",
+
+	zc_profile(flag, "--thread[%p][%p][%p,%p,%p,%p,%p]--",
 			a_thread,
-			a_thread->mdc,
 			a_thread->event,
 			a_thread->pre_path_buf,
 			a_thread->path_buf,
@@ -28,7 +27,6 @@ void zlog_thread_profile(zlog_thread_t * a_thread, int flag)
 			a_thread->pre_msg_buf,
 			a_thread->msg_buf);
 
-	zlog_mdc_profile(a_thread->mdc, flag);
 	zlog_event_profile(a_thread->event, flag);
 	zlog_buf_profile(a_thread->pre_path_buf, flag);
 	zlog_buf_profile(a_thread->path_buf, flag);
@@ -41,8 +39,6 @@ void zlog_thread_profile(zlog_thread_t * a_thread, int flag)
 void zlog_thread_del(zlog_thread_t * a_thread)
 {
 	zc_assert(a_thread,);
-	if (a_thread->mdc)
-		zlog_mdc_del(a_thread->mdc);
 	if (a_thread->event)
 		zlog_event_del(a_thread->event);
 	if (a_thread->pre_path_buf)
@@ -72,12 +68,6 @@ zlog_thread_t *zlog_thread_new(int init_version, size_t buf_size_min, size_t buf
 	}
 
 	a_thread->init_version = init_version;
-
-	a_thread->mdc = zlog_mdc_new();
-	if (!a_thread->mdc) {
-		zc_error("zlog_mdc_new fail");
-		goto err;
-	}
 
 	a_thread->event = zlog_event_new(time_cache_count);
 	if (!a_thread->event) {
