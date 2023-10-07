@@ -16,7 +16,7 @@
 
 typedef struct {
 	int init_version;
-	zlog_mdc_t *mdc;
+zlog_mdc_t *mdc;
 	zlog_event_t *event;
 
 	zlog_buf_t *pre_path_buf;

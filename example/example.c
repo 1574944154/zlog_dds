@@ -4,102 +4,41 @@
 
 
 
-void add_format_property(struct log_format_properties_listelem **list, struct log_format_properties_listelem *node)
-{
-    struct log_format_properties_listelem *node2 = malloc(sizeof(struct log_format_properties_listelem));
-    node2->name = node->name;
-    node2->pattern = node->pattern;
-    node2->next = *list;
-    *list = node2;
-}
-
-void add_rule_property(struct log_rule_properties_listelem **list, struct log_rule_properties_listelem *node)
-{
-    struct log_rule_properties_listelem *node2 = malloc(sizeof(struct log_rule_properties_listelem));
-    node2->category = node->category;
-    node2->level = node->level;
-    node2->filePath = node->filePath;
-    node2->archiveMaxSize = node->archiveMaxSize;
-    node2->archiveMaxCount = node->archiveMaxCount;
-    node2->archivePattern = node->archivePattern;
-    node2->formatName = node->formatName;
-    node2->next = *list;
-    *list = node2;
-}
-
-struct ddsi_config_logcfg logcfg = {
-    .bufferMin = 1024,
-    .bufferMax = 10 * 1024 * 1024,
-    .rotateLockFile = "/tmp/zlog.lock",
-    .defaultFormat = "%d(%F %T.%l) %c %-6V (%c:%F:%L) - %m%n",
-    .filePerms = 0600,
-    .fsyncPeriod = 0,
-    .format_properties = NULL,
-    .rule_properties = NULL,
-};
-
 int main(int argc, char *argv[])
 {
     int rc;
 
-    zlog_category_t *c;
+    // zlog_category_t *c = NULL;
 
-    struct log_format_properties_listelem log_fmt1 = {
-        .name = "simple",
-        .pattern = "%d %m%n",
-        .next = NULL,
-    };
+    add_format_property("simple", "%d %c %m%n");
 
-    struct log_format_properties_listelem log_fmt2 = {
-        .name = "normal",
-        .pattern = "%d(%F %T.%l) %m%n",
-        .next = NULL,
-    };
+    add_format_property("normal", "%d(%F %T.%l) %c %m%n");
 
-    struct log_rule_properties_listelem log_rule1 = {
-        .archiveMaxCount = 10,
-        .archiveMaxSize = 10 * 1024 * 1024,
-        .archivePattern = "",
-        .category = "*",
-        .level = "*",
-        .formatName = "simple",
-        .filePath = ">stdout",
-        .next = NULL,
-    };
+    add_rule_property("*", "*", ">stdout", 10*1024*1024, 10, "", "simple");
 
-    struct log_rule_properties_listelem log_rule2 = {
-        .archiveMaxCount = 10,
-        .archiveMaxSize = 5 * 1024 * 1024,
-        .archivePattern = "",
-        .category = "my",
-        .level = "*",
-        .formatName = "normal",
-        .filePath = "/home/yuan/Code/zlog_dds/%c.log",
-        .next = NULL,
-    };
+    // add_rule_property("discovery", "*", "%c.log", 10, 1024*1024, "%c.#r.log", "normal");
+    add_rule_property("discovery", "*", "%c.log", 10*1024*1024, 10, "%c.#r.log", "normal");
 
-    add_format_property(&logcfg.format_properties, &log_fmt1);
-    add_format_property(&logcfg.format_properties, &log_fmt2);
+    zlog_config_init(1024, 10*1024*1024, "/tmp/zlog.lock", "%d(%F %T.%l) %c %-6V (%c:%F:%L) - %m%n", 0600, 0);
 
-    add_rule_property(&logcfg.rule_properties, &log_rule1);
-    add_rule_property(&logcfg.rule_properties, &log_rule2);
-
-    rc = zlog_init(&logcfg);
+    rc = zlog_init();
     if (rc) {
         printf("init failed\n");
         return -1;
     }
 
-    c = zlog_get_category("my");
-    if (!c) {
-        printf("get cat fail\n");
-        zlog_fini();
-        return -2;
-    }
+    // c = zlog_get_category("discovery");
+    // if (!c) {
+    //     printf("not found category\n");
+    //     return -1;
+    // }
 
-    for(int i=0;i<1e6;i++) {
-        zlog_info(c, "hello, zlog ---------------------------------------------");
-    }
+    // for(int i=0;i<1e6;i++) {
+        zlog_info(DDS_LOGC_DISCOVERY, "hello, zlog -----------------------------------------");
+        zlog_info(DDS_LOGC_RADMIN, "hello, zlog -----------------------------------------");
+        // zlog_info(c, "hello, zlog -----------------------------------------");
+    // }
+
 
     zlog_fini();
 

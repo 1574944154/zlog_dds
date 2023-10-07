@@ -26,14 +26,14 @@ extern "C" {
 # endif
 
 
-struct log_format_properties_listelem {
-  struct log_format_properties_listelem *next;
+struct log_format_listelem {
+  struct log_format_listelem *next;
   char *name;
   char *pattern;
 };
 
-struct log_rule_properties_listelem {
-  struct log_rule_properties_listelem *next;
+struct log_rule_listelem {
+  struct log_rule_listelem *next;
   char *category;
   char *level;
   char *filePath;
@@ -43,21 +43,45 @@ struct log_rule_properties_listelem {
   char *formatName;
 };
 
-struct ddsi_config_logcfg {
+struct dds_logcfg {
   uint32_t bufferMin;
   uint32_t bufferMax;
   char *rotateLockFile;
   char *defaultFormat;
   uint32_t filePerms;
   uint32_t fsyncPeriod;
-  struct log_format_properties_listelem *format_properties;
-  struct log_rule_properties_listelem *rule_properties;
+  struct log_format_listelem *format_properties;
+  struct log_rule_listelem *rule_properties;
 };
 
-int zlog_init(struct ddsi_config_logcfg *config);
+enum dds_log_category {
+	DDS_LOGC_DISCOVERY = 0,
+	DDS_LOGC_DATA,
+	DDS_LOGC_RADMIN,
+	DDS_LOGC_TIMING,
+	DDS_LOGC_TRAFFIC,
+	DDS_LOGC_TOPIC,
+	DDS_LOGC_TCP,
+	DDS_LOGC_PLIST,
+	DDS_LOGC_WHC,
+	DDS_LOGC_THROTTLE,
+	DDS_LOGC_RHC,
+	DDS_LOGC_CONTENT,
+	DDS_LOGC_SHM
+};
+
+void add_format_property(char *name, char *pattern);
+
+void add_rule_property(char *category, char *level, char *filePath, uint32_t archiveMaxSize, uint32_t archiveMaxCount, char *archivePattern, char *formatName);
+
+void zlog_config_init(uint32_t bufferMin, uint32_t bufferMax, char *rotateLockFile, char *defaultFormat, uint32_t filePerms, uint32_t fsyncPeriod);
+
+int zlog_init(void);
 void zlog_fini(void);
 
 void zlog_profile(void);
+
+int zlog_set_default_categories(void);
 
 zlog_category_t *zlog_get_category(const char *cname);
 int zlog_level_enabled(zlog_category_t *category, const int level);
@@ -65,17 +89,17 @@ int zlog_level_enabled(zlog_category_t *category, const int level);
 int zlog_level_switch(zlog_category_t * category, int level);
 int zlog_level_enabled(zlog_category_t * category, int level);
 
-void zlog(zlog_category_t * category,
+void zlog(enum dds_log_category lc,
 	const char *file, size_t filelen,
 	const char *func, size_t funclen,
 	long line, int level,
 	const char *format, ...) ZLOG_CHECK_PRINTF(8,9);
-void vzlog(zlog_category_t * category,
+void vzlog(enum dds_log_category lc,
 	const char *file, size_t filelen,
 	const char *func, size_t funclen,
 	long line, int level,
 	const char *format, va_list args);
-void hzlog(zlog_category_t * category,
+void hzlog(enum dds_log_category lc,
 	const char *file, size_t filelen,
 	const char *func, size_t funclen,
 	long line, int level,

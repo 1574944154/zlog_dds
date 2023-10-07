@@ -93,9 +93,9 @@ void zlog_conf_del(zlog_conf_t * a_conf)
 	return;
 }
 
-static int zlog_conf_build(zlog_conf_t *a_conf, struct ddsi_config_logcfg *config);
+static int zlog_conf_build(zlog_conf_t *a_conf, struct dds_logcfg *config);
 
-zlog_conf_t *zlog_conf_new(struct ddsi_config_logcfg *config)
+zlog_conf_t *zlog_conf_new(struct dds_logcfg *config)
 {
 	zlog_conf_t *a_conf = NULL;
 
@@ -149,10 +149,10 @@ err:
 }
 
 
-static int zlog_conf_build(zlog_conf_t *a_conf, struct ddsi_config_logcfg *config)
+static int zlog_conf_build(zlog_conf_t *a_conf, struct dds_logcfg *config)
 {
-	struct log_format_properties_listelem *lf_elem = config->format_properties;
-	struct log_rule_properties_listelem *lr_elem = config->rule_properties;
+	struct log_format_listelem *lf_elem = config->format_properties;
+	struct log_rule_listelem *lr_elem = config->rule_properties;
 	zlog_format_t *a_format = NULL;
 	zlog_rule_t *a_rule = NULL;
 

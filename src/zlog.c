@@ -22,6 +22,8 @@
 #include "rule.h"
 #include "version.h"
 
+#define CATEGORY_CNT 15
+
 /*******************************************************************************/
 static pthread_rwlock_t zlog_env_lock = PTHREAD_RWLOCK_INITIALIZER;
 zlog_conf_t *zlog_env_conf;
@@ -29,10 +31,46 @@ static pthread_key_t zlog_thread_key;
 static zc_hashtable_t *zlog_env_categories;
 static zc_hashtable_t *zlog_env_records;
 static zlog_category_t *zlog_default_category;
-// static size_t zlog_env_reload_conf_count;
 static int zlog_env_is_init = 0;
 static int zlog_env_init_version = 0;
+static struct dds_logcfg logcfg;
+
+static zlog_category_t *categories[CATEGORY_CNT];
+static const char *category_names[] = {"discovery", "data", "radmin", "timing", "traffic", "topic", "tcp", "plist", "whc", "throttle", "rhc", "content", "shm", NULL};
 /*******************************************************************************/
+void add_format_property(char *name, char *pattern)
+{
+    struct log_format_listelem *node = malloc(sizeof(struct log_format_listelem));
+    node->name = name;
+    node->pattern = pattern;
+    node->next = logcfg.format_properties;
+    logcfg.format_properties = node;
+}
+
+void add_rule_property(char *category, char *level, char *filePath, uint32_t archiveMaxSize, uint32_t archiveMaxCount, char *archivePattern, char *formatName)
+{
+    struct log_rule_listelem *node = malloc(sizeof(struct log_rule_listelem));
+    node->category = category;
+    node->level = level;
+    node->filePath = filePath;
+    node->archiveMaxSize = archiveMaxSize;
+    node->archiveMaxCount = archiveMaxCount;
+    node->archivePattern = archivePattern;
+    node->formatName = formatName;
+    node->next = logcfg.rule_properties;
+    logcfg.rule_properties = node;
+}
+
+void zlog_config_init(uint32_t bufferMin, uint32_t bufferMax, char *rotateLockFile, char *defaultFormat, uint32_t filePerms, uint32_t fsyncPeriod)
+{
+	logcfg.bufferMin = bufferMin;
+	logcfg.bufferMax = bufferMax;
+	logcfg.rotateLockFile = rotateLockFile;
+	logcfg.defaultFormat = defaultFormat;
+	logcfg.filePerms = filePerms;
+	logcfg.fsyncPeriod = fsyncPeriod;
+}
+
 /* inner no need thread-safe */
 static void zlog_fini_inner(void)
 {
@@ -61,7 +99,7 @@ static void zlog_clean_rest_thread(void)
 	return;
 }
 
-static int zlog_init_inner(struct ddsi_config_logcfg *config)
+static int zlog_init_inner(struct dds_logcfg *config)
 {
 	int rc = 0;
 
@@ -110,7 +148,7 @@ err:
 }
 
 /*******************************************************************************/
-int zlog_init(struct ddsi_config_logcfg *config)
+int zlog_init()
 {
 	int rc;
 	zc_debug("------zlog_init start------");
@@ -127,9 +165,8 @@ int zlog_init(struct ddsi_config_logcfg *config)
 		goto err;
 	}
 
-
-	if (zlog_init_inner(config)) {
-		zc_error("zlog_init_inner[%s] fail", config);
+	if (zlog_init_inner(&logcfg)) {
+		zc_error("zlog_init_inner fail");
 		goto err;
 	}
 
@@ -142,6 +179,12 @@ int zlog_init(struct ddsi_config_logcfg *config)
 		zc_error("pthread_rwlock_unlock fail, rc=[%d]", rc);
 		return -1;
 	}
+
+	if (zlog_set_default_categories()) {
+		zc_error("zlog_set_default_categories fail");
+		return -1;
+	}
+
 	return 0;
 err:
 	zc_error("------zlog_init fail end------");
@@ -151,6 +194,17 @@ err:
 		return -1;
 	}
 	return -1;
+}
+
+int zlog_set_default_categories()
+{
+	zlog_category_t *category = NULL;
+	for(int i=0;category_names[i]!=NULL;i++) {
+		category = zlog_get_category(category_names[i]);
+		if (category==NULL) return -1;
+		categories[i] = category;
+	}
+	return 0;
 }
 
 /*******************************************************************************/
@@ -280,13 +334,15 @@ int zlog_level_switch(zlog_category_t * category, int level)
 }
 
 /*******************************************************************************/
-void vzlog(zlog_category_t * category,
+void vzlog(enum dds_log_category lc,
 	const char *file, size_t filelen,
 	const char *func, size_t funclen,
 	long line, int level,
 	const char *format, va_list args)
 {
 	zlog_thread_t *a_thread;
+
+	zlog_category_t *category = categories[lc];
 
 	/* The bitmap determination here is not under the protection of rdlock.
 	 * It may be changed by other CPU by zlog_reload() halfway.
@@ -337,13 +393,15 @@ exit:
 	// return;
 }
 
-void hzlog(zlog_category_t *category,
+void hzlog(enum dds_log_category lc,
 	const char *file, size_t filelen,
 	const char *func, size_t funclen,
 	long line, int level,
 	const void *buf, size_t buflen)
 {
 	zlog_thread_t *a_thread;
+
+	zlog_category_t *category = categories[lc];
 
 	if (zlog_category_needless_level(category, level)) return;
 
@@ -378,7 +436,11 @@ exit:
 }
 
 /*******************************************************************************/
-void zlog(zlog_category_t * category,
+// void zlog(enum dds_log_category lc,
+// 	const char *file, size_t filelen, const char *func, size_t funclen,
+// 	long line, const int level,
+// 	const char *format, ...)
+void zlog(enum dds_log_category lc,
 	const char *file, size_t filelen, const char *func, size_t funclen,
 	long line, const int level,
 	const char *format, ...)
@@ -386,7 +448,9 @@ void zlog(zlog_category_t * category,
 	zlog_thread_t *a_thread;
 	va_list args;
 
-	if (category && zlog_category_needless_level(category, level)) return;
+	zlog_category_t *category = categories[lc];
+
+	if (zlog_category_needless_level(category, level)) return;
 
 	pthread_rwlock_rdlock(&zlog_env_lock);
 

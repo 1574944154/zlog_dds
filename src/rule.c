@@ -476,7 +476,7 @@ err:
 	return -1;
 }
 
-zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
+zlog_rule_t *zlog_rule_new(struct log_rule_listelem *elem,
 		zc_arraylist_t *levels,
 		zlog_format_t * default_format,
 		zc_arraylist_t * formats,
@@ -607,7 +607,7 @@ zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
 			a_rule->archive_max_size = elem->archiveMaxSize;
 
 			if (strlen(elem->archivePattern) != 0) {
-				rc = zlog_rule_parse_path(elem->archivePattern, a_rule->archive_path, sizeof(a_rule->file_path),
+				rc = zlog_rule_parse_path(elem->archivePattern, a_rule->archive_path, sizeof(a_rule->archive_path),
 											&(a_rule->archive_specs), time_cache_count);
 				if (rc) {
 					zc_error("zlog_rule_parse_path fail");
@@ -631,7 +631,7 @@ zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
 		} else {
 			struct stat stb;
 
-			if (a_rule->archive_max_size <=0 ) {
+			if (a_rule->archive_max_size <= 0 ) {
 				a_rule->output = zlog_rule_output_static_file_single;
 			} else {
 				a_rule->output = zlog_rule_output_static_file_rotate;
@@ -642,6 +642,11 @@ zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
 						a_rule->file_perms);
 			if (a_rule->static_fd < 0) {
 				zc_error("open file[%s] fail, errno[%d]", a_rule->file_path, errno);
+				goto err;
+			}
+
+			if (fstat(a_rule->static_fd, &stb)) {
+				zc_error("stat [%s] fail, errno[%d], failing to open static_fd", a_rule->file_path, errno);
 				goto err;
 			}
 

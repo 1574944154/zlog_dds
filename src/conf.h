@@ -37,7 +37,7 @@ typedef struct zlog_conf_s {
 
 extern zlog_conf_t * zlog_env_conf;
 
-zlog_conf_t *zlog_conf_new(struct ddsi_config_logcfg *config);
+zlog_conf_t *zlog_conf_new(struct dds_logcfg *config);
 void zlog_conf_del(zlog_conf_t * a_conf);
 void zlog_conf_profile(zlog_conf_t * a_conf, int flag);
 

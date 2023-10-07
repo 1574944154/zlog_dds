@@ -30,7 +30,6 @@ struct zlog_spec_s {
 
 	char time_fmt[MAXLEN_CFG_LINE + 1];
 	int time_cache_index;
-	char mdc_key[MAXLEN_PATH + 1];
 
 	char print_fmt[MAXLEN_CFG_LINE + 1];
 	int left_adjust;

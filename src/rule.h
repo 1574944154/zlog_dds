@@ -66,7 +66,7 @@ struct zlog_rule_s {
 	zlog_record_fn record_func;
 };
 
-zlog_rule_t *zlog_rule_new(struct log_rule_properties_listelem *elem,
+zlog_rule_t *zlog_rule_new(struct log_rule_listelem *elem,
 		zc_arraylist_t *levels,
 		zlog_format_t * default_format,
 		zc_arraylist_t * formats,

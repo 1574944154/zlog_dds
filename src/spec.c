@@ -32,13 +32,12 @@
 void zlog_spec_profile(zlog_spec_t * a_spec, int flag)
 {
 	zc_assert(a_spec,);
-	zc_profile(flag, "----spec[%p][%.*s][%s|%d][%s,%ld,%ld,%s][%s]----",
+	zc_profile(flag, "----spec[%p][%.*s][%s|%d][%s,%ld,%ld,%s]----",
 		a_spec,
 		a_spec->len, a_spec->str,
 		a_spec->time_fmt,
 		a_spec->time_cache_index,
-		a_spec->print_fmt, (long)a_spec->max_width, (long)a_spec->min_width, a_spec->left_fill_zeros ? "true" : "false",
-		a_spec->mdc_key);
+		a_spec->print_fmt, (long)a_spec->max_width, (long)a_spec->min_width, a_spec->left_fill_zeros ? "true" : "false");
 	return;
 }
 
@@ -134,19 +133,6 @@ static int zlog_spec_write_us(zlog_spec_t * a_spec, zlog_thread_t * a_thread, zl
 		gettimeofday(&(a_thread->event->time_stamp), NULL);
 	}
 	return zlog_buf_printf_dec32(a_buf, a_thread->event->time_stamp.tv_usec, 6);
-}
-
-static int zlog_spec_write_mdc(zlog_spec_t * a_spec, zlog_thread_t * a_thread, zlog_buf_t * a_buf)
-{
-	zlog_mdc_kv_t *a_mdc_kv;
-
-	a_mdc_kv = zlog_mdc_get_kv(a_thread->mdc, a_spec->mdc_key);
-	if (!a_mdc_kv) {
-		zc_error("zlog_mdc_get_kv key[%s] fail", a_spec->mdc_key);
-		return 0;
-	}
-
-	return zlog_buf_append(a_buf, a_mdc_kv->value, a_mdc_kv->value_len);
 }
 
 static int zlog_spec_write_str(zlog_spec_t * a_spec, zlog_thread_t * a_thread, zlog_buf_t * a_buf)
@@ -569,27 +555,6 @@ zlog_spec_t *zlog_spec_new(char *pattern_start, char **pattern_next, int *time_c
 
 			*pattern_next = p;
 			a_spec->len = p - a_spec->str;
-			break;
-		}
-
-		if (*p == 'M') {
-			nread = 0;
-			nscan = sscanf(p, "M(%[^)])%n", a_spec->mdc_key, &nread);
-			if (nscan != 1) {
-				nread = 0;
-				if (STRNCMP(p, ==, "M()", 3)) {
-					nread = 3;
-				}
-			}
-			p += nread;
-			if (*(p - 1) != ')') {
-				zc_error("in string[%s] can't find match \')\'", a_spec->str);
-				goto err;
-			}
-
-			*pattern_next = p;
-			a_spec->len = p - a_spec->str;
-			a_spec->write_buf = zlog_spec_write_mdc;
 			break;
 		}
 

@@ -43,7 +43,7 @@ void zlog_format_del(zlog_format_t * a_format)
 	return;
 }
 
-// zlog_format_t *zlog_format_new(struct log_format_properties_listelem *elem, int *time_cache_count)
+// zlog_format_t *zlog_format_new(struct log_format_listelem *elem, int *time_cache_count)
 zlog_format_t *zlog_format_new(char *name, char *pattern, int *time_cache_count)
 {
 	zlog_format_t *a_format = NULL;

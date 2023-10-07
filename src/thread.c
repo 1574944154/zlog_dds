@@ -28,7 +28,7 @@ void zlog_thread_profile(zlog_thread_t * a_thread, int flag)
 			a_thread->pre_msg_buf,
 			a_thread->msg_buf);
 
-	zlog_mdc_profile(a_thread->mdc, flag);
+zlog_mdc_profile(a_thread->mdc, flag);
 	zlog_event_profile(a_thread->event, flag);
 	zlog_buf_profile(a_thread->pre_path_buf, flag);
 	zlog_buf_profile(a_thread->path_buf, flag);
@@ -41,7 +41,7 @@ void zlog_thread_profile(zlog_thread_t * a_thread, int flag)
 void zlog_thread_del(zlog_thread_t * a_thread)
 {
 	zc_assert(a_thread,);
-	if (a_thread->mdc)
+if (a_thread->mdc)
 		zlog_mdc_del(a_thread->mdc);
 	if (a_thread->event)
 		zlog_event_del(a_thread->event);
@@ -116,7 +116,7 @@ zlog_thread_t *zlog_thread_new(int init_version, size_t buf_size_min, size_t buf
 	}
 
 
-	//zlog_thread_profile(a_thread, ZC_DEBUG);
+	// zlog_thread_profile(a_thread, ZC_DEBUG);
 	return a_thread;
 err:
 	zlog_thread_del(a_thread);
