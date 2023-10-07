@@ -17,7 +17,6 @@
 #include "conf.h"
 #include "category_table.h"
 #include "record_table.h"
-#include "mdc.h"
 #include "zc_defs.h"
 #include "rule.h"
 #include "version.h"
