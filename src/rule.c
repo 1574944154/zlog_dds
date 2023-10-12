@@ -70,7 +70,6 @@ void zlog_rule_profile(zlog_rule_t * a_rule, int flag)
 }
 
 /*******************************************************************************/
-
 static int zlog_rule_output_static_file_single(zlog_rule_t * a_rule, zlog_thread_t * a_thread)
 {
 	struct stat stb;
@@ -581,19 +580,11 @@ zlog_rule_t *zlog_rule_new(struct log_rule_listelem *elem,
 
 	p = NULL;
 
-	switch (elem->filePath[0]) {
-	case '>':
-		if (STRNCMP(elem->filePath+1, ==, "stdout", 6)) {
-			a_rule->output = zlog_rule_output_stdout;
-		} else if (STRNCMP(elem->filePath+1, ==, "stderr", 6)) {
-			a_rule->output = zlog_rule_output_stderr;
-		} else {
-			zc_error
-			    ("[%s]the string after is not syslog, stdout or stderr", elem->filePath);
-			goto err;
-		}
-		break;
-	default:
+	if (STRNCMP(elem->filePath, ==, "stdout", 6)) {
+		a_rule->output = zlog_rule_output_stdout;
+	} else if (STRNCMP(elem->filePath, ==, "stderr", 6)) {
+		a_rule->output = zlog_rule_output_stderr;
+	} else {
 		p = elem->filePath;
 		rc = zlog_rule_parse_path(p, a_rule->file_path, sizeof(a_rule->file_path), 
 				&(a_rule->dynamic_specs), time_cache_count);

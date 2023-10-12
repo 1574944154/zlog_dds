@@ -12,6 +12,7 @@
 #include "zc_defs.h"
 #include "event.h"
 #include "buf.h"
+#include "mdc.h"
 
 typedef struct {
 	int init_version;
