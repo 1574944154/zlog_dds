@@ -1,79 +1,45 @@
-# create by lsm <lsm@skybility.com>
-# cmake
 
-cmake_minimum_required(VERSION 2.8.5)
+project(zlog_for_dds)
 
-message(STATUS "path : ${CMAKE_FIND_ROOT_PATH}")
-project(zlog)
-message(STATUS "path : ${CMAKE_FIND_ROOT_PATH}")
+cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_MODULE_PATH ${zlog_SOURCE_DIR}/cmake)
+set(module_name zlog)
 
-#=====================================
-# version of zlog
-#=====================================
-SET(CPACK_PACKAGE_VERSION_MAJOR "1")
-SET(CPACK_PACKAGE_VERSION_MINOR "2")
-SET(CPACK_PACKAGE_VERSION_PATCH "12")
-SET(CPACK_RPM_PACKAGE_RELEASE 1)    #release version.
-SET(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-SET(zlog_ver ${CPACK_PACKAGE_VERSION})
-SET(zlog_so_ver ${CPACK_PACKAGE_VERSION_MAJOR})
+add_library(${module_name} SHARED
+    src/buf.c
+    src/category_table.c
+    src/category.c
+    src/conf.c
+    src/event.c
+    src/format.c
+    src/level_list.c
+    src/level.c
+    src/mdc.c
+    src/record_table.c
+    src/record.c
+    src/rotater.c
+    src/rule.c
+    src/spec.c
+    src/thread.c
+    src/zc_arraylist.c
+    src/zc_hashtable.c
+    src/zc_profile.c
+    src/zc_util.c
+    src/zlog.c
+)
 
-#=======================================================
+target_include_directories(${module_name} PUBLIC src)
 
-message(STATUS "plateform : ${CMAKE_SYSTEM}")
+install(
+    TARGETS ${module_name}
+    EXPORT "${module_name}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT lib
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+)
 
-add_definitions("-g -Wall -Wstrict-prototypes")
-set(CMAKE_C_FLAGS "-std=c99 -pedantic -D_DEFAULT_SOURCE")
-set(CMAKE_C_FLAGS_DEBUG "-ggdb3 -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O2")
-
-if (WIN32)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINVER=0x0500 -D_WIN32_WINNT=0x0500 ")
-endif()
-
-#=====================================================
-# include dir
-# include_directories(include)
-#=====================================================
-
-#=====================================================
-# lib output path.
-cmake_policy(SET CMP0015 NEW)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${zlog_BINARY_DIR}/lib")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${zlog_BINARY_DIR}/lib")
-# bin output path.
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${zlog_BINARY_DIR}/bin")
-#=====================================================
-
-#=====================================================
-# link path.
-link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-#=====================================================
-
-#=====================================================
-# library depend.
-set(Need_THREAD 1)
-if (WIN32)
-    set(Need_UNIXEM 1)
-endif()
-
-include(cmake/LoadLibraries.cmake)
-#=====================================================
-
-#========================================================
-# sub dir
-add_subdirectory(src)
-# add_subdirectory(cpack)
-#========================================================
-
-#========================================================
-# for unittest, call "cmake .. -DUNIT_TEST=on"
-# if(UNIT_TEST)
-#     enable_testing()
-#     add_subdirectory(test)
-# endif()
-#========================================================
-
-add_subdirectory(example)
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/zlog.h
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+  COMPONENT dev)
+  
