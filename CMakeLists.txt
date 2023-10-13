@@ -29,17 +29,37 @@ add_library(${module_name} SHARED
 )
 
 target_include_directories(${module_name} PUBLIC src)
+# target_sources(${module_name} PUBLIC zlog.h)
+target_link_libraries(${module_name} pthread)
 
-install(
-    TARGETS ${module_name}
-    EXPORT "${module_name}"
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT lib
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
-)
+if(${CMAKE_CURRENT_SOURCE_DIR})
+    install(
+        TARGETS ${module_name}
+        EXPORT "${module_name}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT lib
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+    )
 
-install(
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/zlog.h
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-  COMPONENT dev)
-  
+    install(
+        FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/zlog.h
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        COMPONENT dev)
+else()
+
+    add_subdirectory(example)
+
+    install(TARGETS
+        ${module_name}
+        COMPONENT ${module_name}
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        )
+
+    install(FILES
+        zlog.h
+        COMPONENT zlog
+        DESTINATION include
+        )
+endif()
