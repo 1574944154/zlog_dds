@@ -32,7 +32,7 @@ target_include_directories(${module_name} PUBLIC src)
 # target_sources(${module_name} PUBLIC zlog.h)
 target_link_libraries(${module_name} pthread)
 
-if(${CMAKE_CURRENT_SOURCE_DIR})
+if(CMAKE_INSTALL_LIBDIR)
     install(
         TARGETS ${module_name}
         EXPORT "${module_name}"
